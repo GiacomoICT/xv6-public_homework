@@ -1,9 +1,12 @@
+# Pretty sure it's just a list of the objects needed for the Kernel -- Objects are what the linker will use to create the actual executable
 KERNOBJS = \
 	bio.o console.o exec.o file.o fs.o ide.o ioapic.o kalloc.o kbd.o lapic.o \
   log.o main.o mp.o pipe.o proc.o sleeplock.o spinlock.o string.o swtch.o \
   syscall.o sysfile.o sysproc.o trapasm.o trap.o uart.o vectors.o vm.o \
 #
 
+# The $ is assigning the resul of that env variable. The first is the kernel name, the second the processor type
+# Here it's used to decide the correct value of TOOLPREFIX
 UNAME_S := $(shell uname -s)
 UNAME_P := $(shell uname -p)
 ifeq ($(UNAME_S),Linux)
@@ -21,12 +24,14 @@ endif
 # If the makefile can't find QEMU, specify its path here
 QEMU = qemu-system-x86_64
 
+# Here is the role of the prefix: to find gcc, as and ld. "as" is assembler and "ld" linker
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)as
 LD = $(TOOLPREFIX)ld
+# Tools for handling objects
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-OPT ?= -O0
+OPT ?= -O0  # Safe assignment, assigns only if null or undefined
 XFLAGS = -m64 -DX64 -mcmodel=large -mtls-direct-seg-refs -mno-red-zone
 
 CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -Wall -MD -ggdb -fno-omit-frame-pointer
@@ -36,7 +41,10 @@ CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 &
 ASFLAGS = -gdwarf-2 -Wa,-divide $(XFLAGS)
 LDFLAGS = -m elf_x86_64 -nostdlib
 
-
+# This is building those files if a new timestamped version of the ones after ":" is found. dd is writing bytes, in particoular it's setting xv6.img as a 10k bytes of zeros file.
+# It's writing the bootloader (bootblock) at the start of the previously zeroed file (no trunc is telling to keep the size of xv6.img the one set before
+# seek = 1 is saying to write the kernel skipping the first block (the bootloader).
+# Note that bootblock and kernel are files that don't exist yet (bootblock is created just below)
 xv6.img: bootblock kernel fs.img
 	dd if=/dev/zero of=xv6.img count=10000
 	dd if=bootblock of=xv6.img conv=notrunc
@@ -50,7 +58,7 @@ xv6memfs.img: bootblock kernelmemfs
 bootblock: bootasm.S bootmain.c
 	$(CC) -fno-builtin -fno-pic -m32 -nostdinc -c bootasm.S
 	$(CC) -fno-builtin -fno-pic -m32 -O -nostdinc -c bootmain.c
-	$(LD) -m elf_i386 -nostdlib -n -N -e start -Ttext 0x7C00 -o bootblocktmp.o bootasm.o bootmain.o
+	$(LD) -m elf_i386 -nostdlib -n -N -e start -Ttext 0x7C00z -o bootblocktmp.o bootasm.o bootmain.o
 	$(OBJDUMP) -S bootblocktmp.o > bootblock.asm
 	$(OBJCOPY) -S -O binary -j .text bootblocktmp.o bootblock
 	./sign.pl bootblock
@@ -72,6 +80,7 @@ kernel: $(KERNOBJS) entry.o entryother initcode kernel.ld
 	$(OBJDUMP) -S kernel > kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' | sort > kernel.sym
 
+# This is tricky: it's defining a target (i.e a file to build) that is dependent on every c file in the folder. It's removing previous version of itself uponbuild (rm -f "$@" means removing files that match the target name). Last line is creating object: header-dependencies rules for every .c file. It's telling the compiler that every #include is a dependency, meaning that a change in the .h file that is included in any of the .c files will trigger a rebuilt o said file's .o
 depend: .depend
 
 .depend: $(wildcard *.c)
@@ -96,6 +105,8 @@ vectors.S: vectors.pl
 
 ULIB = ulib.o usys.o printf.o umalloc.o
 
+
+# .o files are created by a default GCC rule: this is why it's nowhere to be found in this makefile.
 _%: %.o $(ULIB) user.ld
 	$(LD) $(LDFLAGS) -n -N -T user.ld -e main -Ttext 0x1000 -o $@ $< $(ULIB)
 	$(OBJDUMP) -S $@ > $*.asm
@@ -116,11 +127,14 @@ mkfs: mkfs.c fs.h
 # http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
 .PRECIOUS: %.o
 
+
+# These are user space programs. UPROGS is grouping them and passing them to mkfs so that it can build a correctly formatted filesystem that gives access to the programs listed.
 UPROGS= \
 	_cat _echo _forktest _grep _init _kill _ln _ls _mkdir \
 	_rm _sh _stressfs _usertests _wc _zombie \
 #
 
+#Creating the file system 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
 
@@ -146,6 +160,11 @@ xv6_marked.pdf: xv6.pdf pdfmark
 print: xv6.pdf
 
 # run in emulators
+
+# Here's the core of the make qemu command: we are calling the command 
+# 		$(QEMU) -serial mon:stdio $(QEMUOPTS)
+# Which will launch the emulator with all the desired options. These options include the xv6.img and the file system image, that are listed as dependencies and therefore compiled from scratch to run the command itself
+
 
 # try to generate a unique GDB port
 GDBPORT = $(shell expr `id -u` % 5000 + 25000)
