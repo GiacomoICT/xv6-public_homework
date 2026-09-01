@@ -156,13 +156,13 @@ fork(void)
   for(i = 0; i < NOFILE; i++)
     if(proc->ofile[i])
       np->ofile[i] = filedup(proc->ofile[i]);
-  np->cwd = idup(proc->cwd);
+  np->cwd = idup(proc->cwd);			// We are setting the working dir, wile also informing the inode that there is one more ref
 
   safestrcpy(np->name, proc->name, sizeof(proc->name));
 
   pid = np->pid;
 
-  __sync_synchronize();
+  __sync_synchronize();				// A synchronization info for the compiler
   np->state = RUNNABLE;
 
   return pid;

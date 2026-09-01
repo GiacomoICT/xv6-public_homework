@@ -124,6 +124,7 @@ extern addr_t sys_write(void);
 extern addr_t sys_uptime(void);
 
 // PAGEBREAK!
+// It's an array of pointers to function that don't take input parameters (the syscall, initialized with each address (the extern variables) at the correct slot.
 static addr_t (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,

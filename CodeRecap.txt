@@ -1,0 +1,72 @@
+================== MAKEFILE ============================
+
+First of all, a small recap on how the building process works.
+
+.c files are converted in .o by GCC (this does not appear on the Makefile) which are gonna be used
+by the linker and are the actual files that are listed in the dependencies.
+
+Before ":" is the target of the build, after the dependencies (a change in dependency can trigger 
+a re-built of the target). Below, there are the commands that are executed upon built. 
+
+"make qemu" depends on two foundamental objects: fs.img and xv6.img. They are images of respectively the filesystem and the kernel itself. The first is built from the README and the UPROGS (programs that have to be included in the filesystem, HERE ONE NEEDS TO PUT THE OTHER PROGRAM DEVELOPED) variable. The second is built from the fs image, the kernel and the bootblock, which are some parts that get "organized" in memory during the build.
+
+Other parts of interest are the way header dependencies are created (forcing every file to look at its include as a dependency to avoid stale dependency relationships) and the built of user programs from *.o to _*. The underscore is removed by the ./mkfs.
+
+
+================= STRUCTURE ===========================
+
+asm.h : Macros for the assembler.
+buf.h : defines the struct used for buffer(?).
+date.h : struct for date object.
+
+(IMPORTANT) defs.h : ensemble of all definitions, can be used to find most functions and the comments help with locating the actual implementation.
+
+elf.h : defines a ELF executable file, both file and program section headers.
+fcntl.h : defines some constants to be understood.
+file.h : defines the stucts for files -- an inode is a struct for metadata of a file. There is also a struct (to be understood) that seems to include the reference to write and read functions.
+ 
+fs.h : defines the structs necessary for the on-disk filesystem.
+
+kbd.h : stuff for the keyboard, not that important.
+memlayout.h : stuff for the layout of memory, to be understood.
+mmu.h : defines values for the Memory Management Unit, to be understood.
+
+mp.h : multiprocessor stuff, to be understood. Looks however like a collection of structures for the management of multiple processors.
+
+param.h : only constants params, such as maximum number of processes, cores, etc.
+
+(IMPORTANT) proc.h : contains the structure that are needed for processes to exhist, as well as context and cpu state.
+
+sleeplock.h : structure for locks of processes. This are long term.()
+spinlock.h : structure for mutual exclusion locks.
+
+stat.h : looks like a structure for files(?), however more to "represent the file" to the system in terms of links and size, not the actual file itself.
+
+syscall.h : defines the system call numbers
+
+traps.h : defines the codes for the traps. Interrupts are generated asyncrhonously by the hardware, traps are interrupts generated either by invalid ops (division by 0) or syscall in the user space. They operate at higher level.
+
+(IMPORTANT) user.h : incldues all the defines that are to be seen from the user space. This includes the syscalls (or their wrapper) and the ulib.c functions.
+
+x86 : special assembly instructions, to be understood.
+
+================= SYSCALLS =============================
+
+
+================= STUFF ===============================
+
+The shell takes care of parsing and executing commands. However, "cd" (change directory) is special, as normal commands are called after a fork1. However, calling cd in the fork wouldn't change the working directory of the shell, only the child, which would then exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+   

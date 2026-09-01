@@ -131,7 +131,7 @@ mkfs: mkfs.c fs.h
 # These are user space programs. UPROGS is grouping them and passing them to mkfs so that it can build a correctly formatted filesystem that gives access to the programs listed.
 UPROGS= \
 	_cat _echo _forktest _grep _init _kill _ln _ls _mkdir \
-	_rm _sh _stressfs _usertests _wc _zombie \
+	_rm _sh _stressfs _usertests _wc _zombie _helloworld \
 #
 
 #Creating the file system 
