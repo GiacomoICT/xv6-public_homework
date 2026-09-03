@@ -35,6 +35,7 @@ bootmain(void)
   x = (uint32*) 0x10000; // scratch space
 
   // multiboot header must be in the first 8192 bytes
+  // Looks for multiboot header
   readseg((uchar*)x, 8192, 0);
 
   for (n = 0; n < 8192/4; n++)

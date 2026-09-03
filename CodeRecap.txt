@@ -37,8 +37,8 @@ param.h : only constants params, such as maximum number of processes, cores, etc
 
 (IMPORTANT) proc.h : contains the structure that are needed for processes to exhist, as well as context and cpu state.
 
-sleeplock.h : structure for locks of processes. This are long term.()
-spinlock.h : structure for mutual exclusion locks.
+sleeplock.h : structure for locks of processes. This is put to sleep if the lock is held.
+spinlock.h : structure for mutual exclusion locks. This tries repeatedly to get the lock.
 
 stat.h : looks like a structure for files(?), however more to "represent the file" to the system in terms of links and size, not the actual file itself.
 
