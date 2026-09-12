@@ -75,6 +75,8 @@ initcode: initcode.S
 	$(OBJDUMP) -S initcodetmp.o > initcode.asm
 	$(OBJCOPY) -S -O binary -j .text initcodetmp.o initcode
 
+
+# The first thing that is built into the kernel is entry.o 
 kernel: $(KERNOBJS) entry.o entryother initcode kernel.ld
 	$(LD) $(LDFLAGS) -n -N -T kernel.ld -o kernel entry.o $(KERNOBJS) -b binary initcode entryother
 	$(OBJDUMP) -S kernel > kernel.asm

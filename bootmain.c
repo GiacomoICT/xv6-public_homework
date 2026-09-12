@@ -36,10 +36,12 @@ bootmain(void)
 
   // multiboot header must be in the first 8192 bytes
   // Looks for multiboot header
+  //
+  // Reads the first non-bootsector segment 
   readseg((uchar*)x, 8192, 0);
 
   for (n = 0; n < 8192/4; n++)
-    if (x[n] == 0x1BADB002)
+    if (x[n] == 0x1BADB002)  // Searches for this "magic number"
       if ((x[n] + x[n+1] + x[n+2]) == 0)
         goto found_it;
 

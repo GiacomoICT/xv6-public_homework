@@ -53,7 +53,7 @@ mboot_entry:
 # note: 32-bit operations manipulating 64-bit page table
 # PML4T[0] -> 0x2000 (PDPT)
 # PML4T[256] -> 0x2000 (PDPT)
-  mov     $(0x2000 | PTE_P | PTE_W), %eax
+  mov     $(0x2000 | PTE_P | PTE_W), %eax #PTE_P, PTE_W valid and permission bits
   mov     %eax, 0x1000  # PML4T[0]
   mov     %eax, 0x1800  # PML4T[256]
 
@@ -69,7 +69,7 @@ mboot_entry:
 
 .global entry32mp
 entry32mp:
-# CR3 -> 0x1000 (PML4T)
+# CR3 -> 0x1000 (PML4T) Setting up the page we have created as the "active" one
   mov     $0x1000, %eax
   mov     %eax, %cr3
 
