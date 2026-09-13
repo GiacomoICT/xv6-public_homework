@@ -5,15 +5,47 @@
 .global start
 start:
 
+movb $0x0,  %al
 
+get_cursor:
 
+movb $0x03, %ah
+movb $0,    %bh
+#Output is in dh (row) and dl(col)
+int $0x10
+cmpb $0x0, %al
+jg wait_for_input
 
-// YOUR CODE GOES HERE
+splash:
+
+movb $0x13, %ah
+movb $0x01, %al
+movb $9,    %bl
+movw str_sz,  %cx
+lea  [msg], %bp
+int $0x10
+
+jmp get_cursor
+
+wait_for_input:
+
+movb $0x0, %ah
+int $0x16
+#Returns scancode in ah and ascii in al
+
+ 
+movb $0x13, %ah
+movb $0x01, %al
+movb $11,    %bl
+movw str2_sz,  %cx
+lea  [msg2], %bp
+int $0x10
 
 
 
 
 # Change to 32-bit protected mode so we can run C code
+# We are adding the PROTECTED MODE bit to the other control bits in cr0
 cli
 lgdt    gdtdesc
 movl    %cr0, %eax
@@ -34,7 +66,12 @@ call splashmain
 loop:
     jmp loop
 
-hello: .string "xv6 @ UIC rocks!"
+hello: .string "xv6 @ UIC rocks!\r\n"
+msg: .string "Welcome to xv6@UIC. Press any key to continue\r\n"
+msg2: .string "You clicked!\r\n"
+str_sz: .int 47
+str2_sz: .int 14
+
 
 # Bootstrap GDT
 .p2align 2                                # force 4 byte alignment
