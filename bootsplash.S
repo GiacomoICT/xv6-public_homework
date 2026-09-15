@@ -20,9 +20,9 @@ splash:
 
 movb $0x13, %ah
 movb $0x01, %al
-movb $9,    %bl
+movb $0x4,    %bl
 movw str_sz,  %cx
-lea  [msg], %bp
+lea  msg, %bp
 int $0x10
 
 jmp get_cursor
@@ -36,12 +36,19 @@ int $0x16
  
 movb $0x13, %ah
 movb $0x01, %al
-movb $11,    %bl
+movb $0x0a,    %bl
 movw str2_sz,  %cx
 lea  [msg2], %bp
 int $0x10
 
+movb $0x0, %ah
+int $0x16
 
+switch_to_video:
+
+movb $0x0,  %ah
+movb $0x13, %al
+int $0x10
 
 
 # Change to 32-bit protected mode so we can run C code
@@ -58,7 +65,12 @@ start32:
 
 movw    $(SEG_KDATA<<3), %ax    # Our data segment selector
 movw    %ax, %ds                # -> DS: Data Segment
+movw    %ax, %es                # -> ES: Extra Segment
 movw    %ax, %ss                # -> SS: Stack Segment
+movw    $0, %ax                 # Zero segments not ready for use
+movw    %ax, %fs                # -> FS
+movw    %ax, %gs                # -> GS
+
 
 mov     $0x1000, %esp
 call splashmain
