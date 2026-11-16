@@ -472,7 +472,48 @@ copyout(pde_t *pgdir, addr_t va, void *p, uint64 len)
 void
 dedup(void *vstart, void *vend)
 {
-  cprintf("didn't dedup anything\n");
+  void *page1 = vstart;
+  void *page2;
+  char *kva1, *kva2;
+  pte_t *pte;
+  int found;
+
+  while (page1 < vend){
+    found = 0;
+    if ((kva1 = uva2ka(proc->pgdir, page1)) == 0 || (((*(walkpgdir(proc->pgdir,
+        page1, 0))) & PTE_COW) == PTE_COW)) {
+      page1+=PGSIZE;
+      continue;
+    }
+    page2 = page1 + PGSIZE;
+    while (page2 < vend){
+      if ((kva2 = uva2ka(proc->pgdir, page2)) == 0 || (kva2 == kva1)){
+        page2+= PGSIZE;
+        continue;
+      }
+      if (frames_are_identical(V2P(kva1),V2P(kva2))){
+        found = 1;
+        kretain(kva1);
+        krelease(kva2);
+        pte = walkpgdir(proc->pgdir, page2, 0);
+        *pte = *(walkpgdir(proc->pgdir, page1, 0)); // 1101, no W
+        *pte &= ~PTE_W;
+        *pte |= PTE_COW;
+        //cprintf("found_match\n");
+        //cprintf("kva1:%d kva2:%d \n", kva1, kva2);
+      }
+      if (found){
+        pte = walkpgdir(proc->pgdir, page1, 0);
+        *pte &= ~PTE_W;
+        *pte |= PTE_COW;
+      }
+      page2 += PGSIZE;
+      //cprintf("page2:%d \n", page2);
+    }
+    
+    page1+= PGSIZE;
+  }
+  //cprintf("didn't dedup anything\n");
   return;
 }
 
@@ -481,6 +522,22 @@ dedup(void *vstart, void *vend)
 int
 copyonwrite(char* v)
 {
-  cprintf("didn't copyonwrite anything\n");
-  return 0;
+  void *page = (void*)PGROUNDDOWN((addr_t)v);
+  pte_t *pte;
+  char *kva_new;
+
+  pte = walkpgdir(proc->pgdir, page, 0);
+  if ((*pte & PTE_COW) == 0){
+    //cprintf("Not a copyonwrite! Page:%d \n", page);
+    return 0;
+  }
+  //cprintf("Got out! Page:%d \n", page);
+  krelease(uva2ka(proc->pgdir, page));
+  kva_new = kalloc();
+  memmove(kva_new, uva2ka(proc->pgdir, page), PGSIZE);
+  update_checksum(V2P(kva_new));
+  *pte = V2P(kva_new) | PTE_W | PTE_U | PTE_P;
+  *pte &= ~PTE_COW;
+  //cprintf("didn't copyonwrite anything\n");
+  return 1;
 }

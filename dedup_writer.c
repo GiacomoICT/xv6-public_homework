@@ -22,7 +22,7 @@ main(int argc, char *argv[]) {
   }
   for(int i=1000000;i<10000000;i++) {
     if(buf[i]) {
-      printf(1,"Uh-oh! Found some junk in my trunk! at %d, %p: %d!\n", i, &buf[i], buf[i]);
+      printf(1,"Uh-oh! Found some junk in my trunk, round 2! at %d, %p: %d!\n", i, &buf[i], buf[i]);
       exit();
     }
   }
